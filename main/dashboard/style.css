@@ -1,0 +1,459 @@
+/* Reset & Base Setup */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* Clean modern UI typography */
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background-color: #141414; /* Original Netflix background color */
+    color: #e5e5e5;
+    overflow-x: hidden;
+}
+
+/* -------------------------------------------
+   1. NAVBAR (Header)
+------------------------------------------- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 4%;
+    /* Smooth gradient to blend navbar with Hero image */
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%);
+    position: fixed;
+    width: 100%;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    color: #e50914; /* Merah Netflix */
+    font-size: 2rem;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 0.9rem;
+}
+
+/* Blinking status badge (Live Connection) */
+.status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: rgba(229, 9, 20, 0.1);
+    padding: 6px 14px;
+    border-radius: 20px;
+    color: #e50914;
+    font-weight: bold;
+    border: 1px solid rgba(229, 9, 20, 0.4);
+}
+
+.pulse-dot {
+    width: 8px;
+    height: 8px;
+    background-color: #e50914;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #e50914;
+    animation: pulse 1.5s infinite;
+}
+
+/* Wi-Fi Manager Styling */
+.btn-icon {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.btn-icon:hover {
+    transform: rotate(90deg);
+}
+
+.wifi-box { max-width: 500px; }
+.wifi-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 4px;
+    background-color: #0a0a0a;
+}
+.wifi-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #222;
+    transition: background-color 0.2s;
+}
+.wifi-item:hover { background-color: #282828; }
+.wifi-item:last-child { border-bottom: none; }
+.scanning-text { padding: 15px; text-align: center; color: #808080; }
+
+.input-dark {
+    width: 100%;
+    padding: 12px;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 4px;
+    font-size: 1rem;
+    outline: none;
+}
+.input-dark:focus { border-color: #e50914; }
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(229, 9, 20, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); }
+}
+
+/* -------------------------------------------
+   2. HERO SECTION
+------------------------------------------- */
+.hero-agent {
+    height: 70vh;
+    min-height: 500px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(to right, #000 30%, transparent 100%), #1a1a1a;
+    padding: 0 4%;
+}
+
+.hero-content {
+    max-width: 650px;
+    position: relative;
+    z-index: 2;
+    margin-top: 50px;
+}
+
+.agent-tag {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #fff;
+    background-color: #e50914;
+    padding: 4px 8px;
+    border-radius: 3px;
+    margin-bottom: 20px;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: 15px;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero-insight {
+    font-size: 1.15rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    color: #d2d2d2;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 10px 28px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.btn-play {
+    background-color: #fff;
+    color: #000;
+}
+
+.btn-play:hover {
+    background-color: #e6e6e6;
+}
+
+.btn-info {
+    background-color: rgba(109, 109, 110, 0.7);
+    color: #fff;
+}
+
+.btn-info:hover {
+    background-color: rgba(109, 109, 110, 0.4);
+}
+
+.hero-fade-bottom {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 150px;
+    background: linear-gradient(to bottom, transparent 0%, #141414 100%);
+}
+
+/* -------------------------------------------
+   3. MAIN CONTENT (Horizontal Slider)
+------------------------------------------- */
+.main-content {
+    padding: 0 4% 50px 4%;
+    position: relative;
+    z-index: 3;
+    margin-top: -60px;
+}
+
+.row-title {
+    font-size: 1.3rem;
+    color: #e5e5e5;
+    margin-bottom: 15px;
+    font-weight: 600;
+    margin-top: 30px;
+}
+
+.slider-row {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    padding-top: 10px;
+    scrollbar-width: none;
+}
+
+.slider-row::-webkit-scrollbar {
+    display: none;
+}
+
+.metric-card {
+    flex: 0 0 calc(25% - 15px);
+    min-width: 220px;
+    background-color: #181818;
+    border-radius: 4px;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card:hover {
+    transform: scale(1.05);
+    background-color: #282828;
+    z-index: 4;
+}
+
+.metric-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #333;
+    transition: background-color 0.3s;
+}
+
+.metric-card:hover::after {
+    background-color: #e50914;
+}
+
+.card-header {
+    font-size: 0.9rem;
+    color: #808080;
+    padding: 15px 15px 5px 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.card-body {
+    padding: 5px 15px 25px 15px;
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+}
+
+.value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.unit {
+    font-size: 1.1rem;
+    color: #808080;
+}
+
+.status-only {
+    font-size: 1.6rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+/* -------------------------------------------
+   4. MODAL / TERMINAL AI LOGS
+------------------------------------------- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.85);
+    z-index: 999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal-box {
+    background-color: #141414;
+    border: 1px solid #333;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 800px;
+    padding: 30px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #808080;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.modal-box h2 {
+    color: #e5e5e5;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.terminal-window {
+    background-color: #000;
+    padding: 20px;
+    border-radius: 5px;
+    height: 350px;
+    overflow-y: auto;
+    font-family: 'Courier New', Courier, monospace;
+    border-left: 3px solid #e50914;
+}
+
+.log-line {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.log-line.System { color: #808080; }
+.log-line.AI { color: #4ade80; }
+
+.metric-card { transition: transform 0.2s, border-color 0.2s; }
+.metric-card:hover { transform: translateY(-5px); border-color: #e50914; }
+
+.fab-chat {
+    position: fixed; bottom: 30px; right: 30px;
+    width: 60px; height: 60px;
+    background-color: #e50914; color: white;
+    border: none; border-radius: 50%;
+    font-size: 1.8rem; cursor: pointer;
+    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+    transition: transform 0.3s; z-index: 9999;
+}
+.fab-chat:hover { transform: scale(1.1); }
+
+.chat-modal {
+    position: fixed; bottom: 100px; right: 30px;
+    width: 350px; background-color: #0a0a0a;
+    border: 1px solid #333; border-radius: 8px;
+    display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8); z-index: 10000;
+    max-height: 80vh;
+}
+.chat-header {
+    background-color: #1a1a1a; padding: 15px;
+    border-bottom: 1px solid #333;
+    display: flex; justify-content: space-between; align-items: center;
+    border-radius: 8px 8px 0 0; color: #e50914;
+}
+.chat-body {
+    max-height: 40vh; 
+    flex: 1 1 auto;
+    padding: 15px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 10px;
+}
+.chat-footer {
+    padding: 10px; border-top: 1px solid #333;
+    display: flex; gap: 10px; background-color: #111;
+    border-radius: 0 0 8px 8px;
+}
+.msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; }
+.ai-msg { background-color: #222; align-self: flex-start; border-bottom-left-radius: 2px; }
+.user-msg { background-color: #e50914; align-self: flex-end; border-bottom-right-radius: 2px; color: white; }
+
+#metric-canvas {
+    width: 100%;
+    height: 250px;
+    display: block;
+}
+
+/* -------------------------------------------
+   5. RESPONSIVE (For Mobile & Tablet)
+------------------------------------------- */
+@media (max-width: 768px) {
+    .hero-title { font-size: 2.5rem; }
+    .hero-insight { font-size: 1rem; }
+    .metric-card { flex: 0 0 calc(50% - 10px); min-width: 150px; }
+    .value { font-size: 1.8rem; }
+    .status-only { font-size: 1.2rem; }
+}
+
+@media (min-width: 768px) {
+    .chat-modal {
+        width: 450px;
+        bottom: 110px; 
+        right: 40px;
+    }
+    .chat-body {
+        max-height: 60vh;
+    }
+    .fab-chat {
+        width: 70px; height: 70px;
+        font-size: 2rem;
+        bottom: 40px; right: 40px;
+    }
+}
+
+@media (max-height: 500px) {
+    #metric-canvas {
+        height: 150px;
+    }
+}

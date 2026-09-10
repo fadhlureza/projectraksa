@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAKSA | System Monitor</title>
+    <!-- Link to external CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 1. NAVBAR (Clean & Minimalist) -->
+    <nav class="navbar">
+        <div class="logo">RAKSA</div>
+        <div class="nav-right">
+            <button class="btn-icon" id="btn-wifi-settings" title="Wi-Fi Settings">⚙️</button>
+            <span class="clock" id="sys-clock">00:00</span>
+            <div class="status-badge" id="conn-status">
+                <span class="pulse-dot"></span> <span id="status-text">Live Connection</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. HERO SECTION -->
+    <!-- Movie-style featured design -->
+    <header class="hero-agent">
+        <div class="hero-content">
+            <span id="ai-status-badge" class="badge" style="background-color: #333; color: #888;">✦ MIMICLAW AI: STANDBY</span>
+            <h1 class="hero-title" id="ai-status-title">System Stable</h1>
+            <p class="hero-insight" id="ai-insight-text">
+                "All server parameters are normal. No temperature anomalies or current surges detected in the last 24 hours. Rack door is closed securely."
+            </p>
+            <div class="hero-buttons">
+                <!-- Manual analysis trigger button -->
+                <button class="btn btn-play" id="btn-analyze">
+                    <span class="play-icon">▶</span> Force Analyze
+                </button>
+                <!-- View AI logs button -->
+                <button class="btn btn-info" id="btn-logs">
+                    <span class="info-icon">ℹ</span> View Logs
+                </button>
+            </div>
+        </div>
+        <div class="hero-fade-bottom"></div>
+    </header>
+
+    <!-- 3. MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- Row 1: Critical Metrics (Power & Temp) -->
+        <h2 class="row-title">Critical Metrics</h2>
+        <div class="slider-row">
+            <!-- Voltage -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('VOLTAGE', 'voltage')">
+                <div class="card-header">Voltage</div>
+                <div class="card-body">
+                    <span class="value" id="val-volt">--</span><span class="unit">V</span>
+                </div>
+            </div>
+            <!-- Current -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('CURRENT', 'current')">
+                <div class="card-header">Current</div>
+                <div class="card-body">
+                    <span class="value" id="val-curr">--</span><span class="unit">A</span>
+                </div>
+            </div>
+            <!-- Power (calculated from voltage x current) -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('POWER', 'power')">
+                <div class="card-header">Power</div>
+                <div class="card-body">
+                    <span class="value" id="val-power">--</span><span class="unit">W</span>
+                </div>
+            </div>
+            <!-- Temperature (DS18B20) -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('TEMPERATURE', 'temp')">
+                <div class="card-header">Temperature</div>
+                <div class="card-body">
+                    <span class="value" id="val-temp">--</span><span class="unit">°C</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Security & System -->
+        <h2 class="row-title">Security & System</h2>
+        <div class="slider-row">
+            <!-- Door Sensor (MC-38) -->
+            <div class="metric-card" id="card-door" style="cursor: pointer;" onclick="openMetric('RACK DOOR', 'door_open')">
+                <div class="card-header">Rack Door</div>
+                <div class="card-body status-only" id="val-door">CLOSED</div>
+            </div>
+            <!-- Smoke Sensor (MQ-2) -->
+            <div class="metric-card" id="card-smoke" style="cursor: pointer;" onclick="openMetric('SMOKE / GAS', 'smoke_detected')">
+                <div class="card-header">Smoke / Gas</div>
+                <div class="card-body status-only" id="val-smoke">CLEAR</div>
+            </div>
+            <!-- Backup Battery -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('BACKUP POWER', 'battery_pct')">
+                <div class="card-header">Backup Power</div>
+                <div class="card-body">
+                    <span class="value" id="val-batt">--</span><span class="unit">%</span>
+                </div>
+            </div>
+            <!-- Storage (SD Card) -->
+            <div class="metric-card" id="card-sd" style="cursor: pointer;" onclick="openMetric('SD CARD', 'sd_error')">
+                <div class="card-header">SD Card</div>
+                <div class="card-body status-only" id="val-sd">MOUNTED</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AI Chat/Log Modal (Hidden by default) -->
+    <div class="modal-overlay" id="agent-modal" style="display: none;">
+        <div class="modal-box">
+            <button class="close-btn" id="btn-close-modal">✕</button>
+            <h2>Mimiclaw Terminal</h2>
+            <div class="terminal-window" id="terminal-output">
+                <p class="log-line System">>> System initialized...</p>
+                <p class="log-line AI">>> Mimiclaw Agent standby.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pop-up Wi-Fi Manager -->
+    <div class="modal-overlay" id="wifi-modal" style="display: none;">
+        <div class="modal-box wifi-box">
+            <button class="close-btn" id="btn-close-wifi">✕</button>
+            <h2>Network Settings</h2>
+            <p style="color: #808080; margin-bottom: 20px;">Select a network to connect RAKSA Server to the Internet.</p>
+            
+            <div id="wifi-list" class="wifi-list">
+                <div class="scanning-text">Scanning available networks...</div>
+            </div>
+
+            <div id="wifi-form" style="display: none; margin-top: 20px;">
+                <h3 id="selected-ssid" style="color: #38bdf8; margin-bottom: 10px;">--</h3>
+                <input type="password" id="wifi-password" class="input-dark" placeholder="Enter Password">
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn btn-play" id="btn-connect-wifi">Connect</button>
+                    <button class="btn btn-info" id="btn-cancel-wifi">Cancel</button>
+                </div>
+            </div>
+
+            <div id="wifi-connected-state" style="display: none; text-align: center; margin-top: 10px;">
+                <div style="width: 60px; height: 60px; background: #1a1a1a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+                    <span id="connected-signal-icon" style="font-size: 2rem;">📶</span>
+                </div>
+                <h3 style="color: #4ade80; margin-bottom: 5px;">Connected to</h3>
+                <h2 id="connected-ssid-name" style="color: #fff; margin-bottom: 5px;">--</h2>
+                <p id="connected-signal-text" style="color: #808080; margin-bottom: 15px;">Signal Strength: -- dBm</p>
+                
+                <div style="background: #1a1a1a; padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+                    <p style="color: #808080; font-size: 0.85rem; margin-bottom: 5px;">Access RAKSA from Home Wi-Fi:</p>
+                    <a id="sta-ip-link" href="#" style="color: #38bdf8; font-weight: bold; text-decoration: none; font-size: 1.1rem;">http://--</a>
+                </div>
+                <button class="btn btn-info" id="btn-disconnect-wifi" style="width: 100%;">Disconnect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metric Analysis & Graph Modal -->
+    <div class="modal-overlay" id="metric-modal" style="display: none;">
+        <div class="modal-box" style="max-width: 600px;">
+            <button class="close-btn" id="btn-close-metric">✕</button>
+            <h2 id="metric-modal-title" style="margin-bottom: 5px;">METRIC DETAILS</h2>
+            <p id="metric-modal-value" style="font-size: 2rem; font-weight: bold; color: #fff; margin-bottom: 20px;">--</p>
+            
+            <!-- Canvas Grafik HTML5 -->
+            <div style="background: #111; padding: 10px; border-radius: 8px; border: 1px solid #333; margin-bottom: 20px;">
+                <canvas id="metric-canvas" width="540" height="200"></canvas>
+            </div>
+
+            <!-- AI Agent Analysis -->
+            <div style="background: rgba(229, 9, 20, 0.1); border-left: 4px solid #e50914; padding: 15px; border-radius: 4px;">
+                <h4 style="color: #e50914; margin-bottom: 10px;">✦ MIMICLAW AGENT ANALYSIS</h4>
+                <p id="metric-ai-analysis" style="color: #ccc; font-size: 0.95rem; line-height: 1.5;">Loading real-time data analysis...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chatbox Button & Container -->
+    <button class="fab-chat" id="btn-fab-chat" title="Contact AI">💬</button>
+    <div class="chat-modal" id="chatbox-modal" style="display: none;">
+        <div class="chat-header">
+            <h3 style="font-size: 1.1rem;">✦ Mimiclaw Agent</h3>
+            <button class="close-btn" id="btn-close-chat" style="position: static;">✕</button>
+        </div>
+        <div class="chat-body" id="chat-messages">
+            <div class="msg ai-msg">RAKSA system is stable. How can I assist you?</div>
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" class="input-dark" placeholder="Ask AI..." style="border:none; margin:0;">
+            <button id="btn-send-chat" class="btn btn-play" style="padding: 10px 15px;">Send</button>
+        </div>
+    </div>
+
+    <!-- Link to external Javascript -->
+    <script src="script.js"></script>
+</body>
+</html>
