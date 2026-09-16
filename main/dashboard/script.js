@@ -31,10 +31,23 @@ function fetchSensorData() {
             document.getElementById('val-curr').innerText = data.current ? data.current.toFixed(2) : "--";
 
             // Automatic Power (Watt) calculation if not sent by ESP32
-            let power = data.power || ((data.voltage || 0) * (data.current || 0));
-            document.getElementById('val-power').innerText = power.toFixed(0);
+            let power = data.power !== undefined ? data.power : ((data.voltage || 0) * (data.current || 0));
+            document.getElementById('val-power').innerText = power.toFixed(1);
 
-            document.getElementById('val-temp').innerText = data.temp ? data.temp.toFixed(1) : "--";
+            if (data.temp === -999.0 || data.temp === -999) {
+                document.getElementById('val-temp').innerText = "BOOTING";
+                document.getElementById('val-temp').style.fontSize = "1.2rem";
+                document.getElementById('val-temp').nextElementSibling.style.display = "none";
+            } else {
+                document.getElementById('val-temp').innerText = data.temp !== undefined ? data.temp.toFixed(1) : "--";
+                document.getElementById('val-temp').style.fontSize = "";
+                document.getElementById('val-temp').nextElementSibling.style.display = "inline";
+            }
+
+            // -- Update Power Quality Metrics --
+            document.getElementById('val-energy').innerText = data.energy !== undefined ? data.energy.toFixed(0) : "--";
+            document.getElementById('val-freq').innerText = data.frequency !== undefined ? data.frequency.toFixed(1) : "--";
+            document.getElementById('val-pf').innerText = data.power_factor !== undefined ? data.power_factor.toFixed(2) : "--";
 
             // -- Update Security & System Metrics --
             // 1. Door Sensor (MC-38)
@@ -58,7 +71,7 @@ function fetchSensorData() {
             }
 
             // 3. Battery & SD Card
-            document.getElementById('val-batt').innerText = data.battery_pct !== undefined ? data.battery_pct : "--";
+            document.getElementById('val-batt').innerText = data.batt_pct !== undefined ? data.batt_pct : "--";
 
             const sdEl = document.getElementById('val-sd');
             if (data.sd_error === true) {

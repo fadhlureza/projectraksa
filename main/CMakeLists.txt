@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS
         "main.cpp"
+        "battery/battery.cpp"
         "door/mc38.cpp"
         "network_manager/network.cpp"
         "pzem/pzem.cpp"
@@ -12,6 +13,7 @@ idf_component_register(
         "web_server/webserver.cpp"
     INCLUDE_DIRS
         "."
+        "battery"
         "door"
         "network_manager"
         "pzem"

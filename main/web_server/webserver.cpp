@@ -6,7 +6,9 @@
 #include <esp_http_server.h>
 #include <esp_log.h>
 #include <sys/param.h>
+#include "constant.h"
 
+#include "sensor_manager/sensor.h"
 
 namespace WebServer {
 
@@ -40,12 +42,25 @@ static esp_err_t index_get_handler(httpd_req_t *req) {
     }
 
 static esp_err_t api_data_get_handler(httpd_req_t *req) {
-  const char *json_resp = "{\"voltage\":220.5, \"current\":1.2, \"temp\": "
-                          "35.5, \"door_open\": false, \"smoke_detected\": "
-                          "false, \"battery_pct\": 95, \"sd_error\": false}";
-  httpd_resp_set_type(req, "application/json");
-  httpd_resp_send(req, json_resp, HTTPD_RESP_USE_STRLEN);
-  return ESP_OK;
+    char json_resp[256];
+    
+    // Copy data safely using SensorManager getter
+    SystemData_t safe_data = SensorManager::get_data();
+
+    snprintf(json_resp, sizeof(json_resp),
+             "{\"voltage\":%.1f, \"current\":%.3f, \"power\":%.1f, "
+             "\"energy\":%.0f, \"frequency\":%.1f, \"power_factor\":%.2f, "
+             "\"temp\":%.2f, \"door_open\":%s, \"smoke_detected\":%s, "
+             "\"smoke_raw\":%d, \"batt_volt\":%.2f, \"batt_pct\":%d}",
+             safe_data.voltage, safe_data.current, safe_data.power,
+             safe_data.energy, safe_data.frequency, safe_data.power_factor,
+             safe_data.temperature, safe_data.door_open ? "true" : "false",
+             safe_data.smoke_raw > 2000 ? "true" : "false", safe_data.smoke_raw,
+             safe_data.battery_voltage, safe_data.battery_percentage);
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_send(req, json_resp, HTTPD_RESP_USE_STRLEN);
+    return ESP_OK;
 }
 
 // --- NEW FEATURE: WI-FI SCAN API ---

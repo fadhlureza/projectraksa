@@ -14,18 +14,28 @@ void ds18b20_init_sensor(gpio_num_t pin, onewire_bus_handle_t *out_bus_handle,
   onewire_device_t next_onewire_device;
 
   onewire_new_device_iter(*out_bus_handle, &iter);
-  onewire_device_iter_get_next(iter, &next_onewire_device);
+  esp_err_t search_result = onewire_device_iter_get_next(iter, &next_onewire_device);
   onewire_del_device_iter(iter);
 
-  ds18b20_config_t ds_cfg = {};
-  ds18b20_new_device(&next_onewire_device, &ds_cfg, out_ds_handle);
-
-  ds18b20_set_resolution(*out_ds_handle, DS18B20_RESOLUTION_12B);
+  if (search_result == ESP_OK) {
+      ds18b20_config_t ds_cfg = {};
+      ds18b20_new_device(&next_onewire_device, &ds_cfg, out_ds_handle);
+      ds18b20_set_resolution(*out_ds_handle, DS18B20_RESOLUTION_12B);
+  } else {
+      *out_ds_handle = nullptr;
+  }
 }
 
-float ds18b20_read_temp(ds18b20_device_handle_t ds_handle) {
+void ds18b20_trigger(ds18b20_device_handle_t ds_handle) {
+  if (ds_handle) {
+      ds18b20_trigger_temperature_conversion(ds_handle);
+  }
+}
+
+float ds18b20_get(ds18b20_device_handle_t ds_handle) {
   float temperature = -999.0;
-  ds18b20_trigger_temperature_conversion(ds_handle);
-  ds18b20_get_temperature(ds_handle, &temperature);
+  if (ds_handle) {
+      ds18b20_get_temperature(ds_handle, &temperature);
+  }
   return temperature;
 }

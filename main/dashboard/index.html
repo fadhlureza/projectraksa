@@ -79,7 +79,33 @@
             </div>
         </div>
 
-        <!-- Row 2: Security & System -->
+        <!-- Row 2: Power Quality -->
+        <h2 class="row-title">Power Quality</h2>
+        <div class="slider-row">
+            <!-- Energy -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('ENERGY', 'energy')">
+                <div class="card-header">Energy</div>
+                <div class="card-body">
+                    <span class="value" id="val-energy">--</span><span class="unit">Wh</span>
+                </div>
+            </div>
+            <!-- Frequency -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('FREQUENCY', 'frequency')">
+                <div class="card-header">Frequency</div>
+                <div class="card-body">
+                    <span class="value" id="val-freq">--</span><span class="unit">Hz</span>
+                </div>
+            </div>
+            <!-- Power Factor -->
+            <div class="metric-card" style="cursor: pointer;" onclick="openMetric('POWER FACTOR', 'power_factor')">
+                <div class="card-header">Power Factor</div>
+                <div class="card-body">
+                    <span class="value" id="val-pf">--</span><span class="unit"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: Security & System -->
         <h2 class="row-title">Security & System</h2>
         <div class="slider-row">
             <!-- Door Sensor (MC-38) -->
