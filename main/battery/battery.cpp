@@ -12,17 +12,12 @@
 #define BATTERY_MAX_VOLTAGE 4.2f
 #define BATTERY_MIN_VOLTAGE 3.2f
 
-void battery_init(adc_channel_t channel, adc_oneshot_unit_handle_t *out_handle) {
-    adc_oneshot_unit_init_cfg_t init_config = {};
-    init_config.unit_id = ADC_UNIT_1;
-
-    adc_oneshot_new_unit(&init_config, out_handle);
-
+void battery_init(adc_oneshot_unit_handle_t handle, adc_channel_t channel) {
     adc_oneshot_chan_cfg_t config = {};
     config.bitwidth = ADC_BITWIDTH_DEFAULT;
     config.atten = ADC_ATTEN_DB_12;
 
-    adc_oneshot_config_channel(*out_handle, channel, &config);
+    adc_oneshot_config_channel(handle, channel, &config);
 }
 
 float battery_read_voltage(adc_oneshot_unit_handle_t handle, adc_channel_t channel) {

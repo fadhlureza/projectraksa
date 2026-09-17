@@ -26,7 +26,7 @@
 // Structure to store shared system telemetry data
 typedef struct {
   bool door_open;
-  int smoke_raw;
+  float smoke_voltage;
   float temperature;
 
   // Power Quality Data

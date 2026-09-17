@@ -51,11 +51,11 @@ static esp_err_t api_data_get_handler(httpd_req_t *req) {
              "{\"voltage\":%.1f, \"current\":%.3f, \"power\":%.1f, "
              "\"energy\":%.0f, \"frequency\":%.1f, \"power_factor\":%.2f, "
              "\"temp\":%.2f, \"door_open\":%s, \"smoke_detected\":%s, "
-             "\"smoke_raw\":%d, \"batt_volt\":%.2f, \"batt_pct\":%d}",
+             "\"smoke_voltage\":%.2f, \"batt_volt\":%.2f, \"batt_pct\":%d}",
              safe_data.voltage, safe_data.current, safe_data.power,
              safe_data.energy, safe_data.frequency, safe_data.power_factor,
              safe_data.temperature, safe_data.door_open ? "true" : "false",
-             safe_data.smoke_raw > 2000 ? "true" : "false", safe_data.smoke_raw,
+             safe_data.smoke_voltage > 1.6f ? "true" : "false", safe_data.smoke_voltage,
              safe_data.battery_voltage, safe_data.battery_percentage);
 
     httpd_resp_set_type(req, "application/json");

@@ -12,7 +12,7 @@ extern "C" {
  * @param channel The ADC channel connected to the divider midpoint.
  * @param out_handle Pointer to store the ADC oneshot unit handle.
  */
-void battery_init(adc_channel_t channel, adc_oneshot_unit_handle_t *out_handle);
+void battery_init(adc_oneshot_unit_handle_t handle, adc_channel_t channel);
 
 /**
  * @brief Read the actual battery voltage (in Volts).
