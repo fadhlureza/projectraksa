@@ -16,21 +16,6 @@
 #ifndef MIMI_SECRET_MODEL_PROVIDER
 #define MIMI_SECRET_MODEL_PROVIDER  "openai"
 #endif
-#ifndef MIMI_SECRET_PROXY_HOST
-#define MIMI_SECRET_PROXY_HOST      ""
-#endif
-#ifndef MIMI_SECRET_PROXY_PORT
-#define MIMI_SECRET_PROXY_PORT      ""
-#endif
-#ifndef MIMI_SECRET_PROXY_TYPE
-#define MIMI_SECRET_PROXY_TYPE      ""
-#endif
-#ifndef MIMI_SECRET_SEARCH_KEY
-#define MIMI_SECRET_SEARCH_KEY      ""
-#endif
-#ifndef MIMI_SECRET_TAVILY_KEY
-#define MIMI_SECRET_TAVILY_KEY      ""
-#endif
 
 /* Agent Loop */
 #define MIMI_AGENT_STACK             (24 * 1024)
@@ -86,12 +71,6 @@
 
 /* NVS Namespaces & Keys */
 #define MIMI_NVS_LLM                 "llm_config"
-#define MIMI_NVS_PROXY               "proxy_config"
-#define MIMI_NVS_SEARCH              "search_config"
 #define MIMI_NVS_KEY_API_KEY         "api_key"
-#define MIMI_NVS_KEY_TAVILY_KEY      "tavily_key"
 #define MIMI_NVS_KEY_MODEL           "model"
 #define MIMI_NVS_KEY_PROVIDER        "provider"
-#define MIMI_NVS_KEY_PROXY_HOST      "host"
-#define MIMI_NVS_KEY_PROXY_PORT      "port"
-#define MIMI_NVS_KEY_PROXY_TYPE      "proxy_type"
