@@ -7,6 +7,10 @@
 // Sensor Manager
 #include "sensor_manager/sensor.h"
 
+// Hardware Storage & Clock
+#include "rtc/rtc.h"
+#include "sdcard/sdlog.h"
+
 // Network & Web Server Modules
 #include "network.h"
 #include "webserver.h"
@@ -24,6 +28,14 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(ret);
 
   ESP_LOGI(TAG, "=== RAKSA SYSTEM BOOTING ===");
+
+  // Initialize RTC DS3231 and synchronize system time
+  ESP_LOGI(TAG, ">> Initializing RTC DS3231...");
+  rtc_init(PIN_I2C_SDA, PIN_I2C_SCL);
+
+  // Initialize MicroSD Logger (Graceful degradation if no card inserted)
+  ESP_LOGI(TAG, ">> Initializing MicroSD Logger...");
+  sdlog_init();
 
   // Initialize sensors and start polling task
   ESP_LOGI(TAG, ">> Initializing Sensor Manager...");

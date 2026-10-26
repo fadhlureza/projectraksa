@@ -5,4 +5,8 @@
 cmake_minimum_required(VERSION 3.16)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(tes_raksa)
+project(raksa)
+
+# Pre-flash SPIFFS image from main/spiffs_data into internal flash
+spiffs_create_partition_image(spiffs main/spiffs_data FLASH_IN_PROJECT)
+

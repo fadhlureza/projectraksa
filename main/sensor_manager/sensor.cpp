@@ -11,6 +11,8 @@
 #include "temperature/temperature.h"
 #include "pzem/pzem.h"
 #include "battery/battery.h"
+#include "rtc/rtc.h"
+#include "sdcard/sdlog.h"
 
 namespace SensorManager {
 
@@ -27,6 +29,7 @@ static ds18b20_device_handle_t ds18b20_dev = nullptr;
 
 static void sensor_task(void *pvParameters) {
     TickType_t last_temp_trigger = 0;
+    TickType_t last_sd_log = 0;
     bool temp_converting = false;
     float temp_val = -999.0;
 
@@ -82,6 +85,32 @@ static void sensor_task(void *pvParameters) {
             ESP_LOGI(TAG, "PZEM -> V:%.1f I:%.3f P:%.1f E:%.0f Hz:%.1f PF:%.2f",
                      p_data.voltage, p_data.current, p_data.power,
                      p_data.energy, p_data.frequency, p_data.power_factor);
+        }
+
+        // Deterministic Hardware Safety Protection (Emergency Trips)
+        if (current_data.relay_state) {
+            if (smoke_v > THRESHOLD_SMOKE_VOLTAGE) {
+                ESP_LOGE(TAG, "[SAFETY TRIP] Smoke/gas detected (%.2fV > %.2fV)! Auto-cutting relay...",
+                         smoke_v, THRESHOLD_SMOKE_VOLTAGE);
+                set_relay(false);
+            } else if (temp_val > THRESHOLD_TEMP_CRITICAL) {
+                ESP_LOGE(TAG, "[SAFETY TRIP] Temperature critical (%.2f C > %.2f C)! Auto-cutting relay...",
+                         temp_val, THRESHOLD_TEMP_CRITICAL);
+                set_relay(false);
+            } else if (pzem_ok && p_data.current > THRESHOLD_CURRENT_MAX) {
+                ESP_LOGE(TAG, "[SAFETY TRIP] Overcurrent detected (%.2fA > %.2fA)! Auto-cutting relay...",
+                         p_data.current, THRESHOLD_CURRENT_MAX);
+                set_relay(false);
+            }
+        }
+
+        // Periodic MicroSD Telemetry Logging (CSV)
+        if (sdlog_is_available() && (xTaskGetTickCount() - last_sd_log >= pdMS_TO_TICKS(SD_LOG_INTERVAL_MS))) {
+            struct tm now;
+            if (rtc_get_time(&now) == ESP_OK) {
+                sdlog_write_row(&current_data, &now);
+            }
+            last_sd_log = xTaskGetTickCount();
         }
 
         // Yield task execution to reset the watchdog timer

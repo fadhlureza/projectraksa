@@ -78,3 +78,7 @@ Desktop.ini
 *.suo       # Visual Studio Solution User Options
 *.sln.docstates # Visual Studio
 *.vscode/
+mimiclaw/
+
+# MimiClaw build-time secrets (API keys)
+main/mimiclaw_agent/mimi_secrets.h

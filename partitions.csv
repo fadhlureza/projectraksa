@@ -1,0 +1,7 @@
+# ESP-IDF Partition Table for 16MB Flash (ESP32-S3-N16R8)
+# Name,   Type, SubType, Offset,   Size,     Flags
+nvs,      data, nvs,     0x9000,   0x6000,
+phy_init, data, phy,     0xf000,   0x1000,
+factory,  app,  factory, 0x20000,  0x380000,
+spiffs,   data, spiffs,  0x3A0000, 0xC50000,
+coredump, data, coredump,0xFF0000, 0x10000,

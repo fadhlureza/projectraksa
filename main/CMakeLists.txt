@@ -11,6 +11,7 @@ idf_component_register(
         "smoke/mq2.cpp"
         "temperature/temperature.cpp"
         "web_server/webserver.cpp"
+        "raksa_bridge/raksa_bridge.cpp"
     INCLUDE_DIRS
         "."
         "battery"
@@ -23,6 +24,8 @@ idf_component_register(
         "smoke"
         "temperature"
         "web_server"
+        "mimiclaw_agent"
+        "raksa_bridge"
     EMBED_TXTFILES
         "dashboard/index.html"
         "dashboard/script.js"
@@ -34,8 +37,14 @@ idf_component_register(
         esp_event
         esp_netif
         esp_http_server
+        esp_http_client
+        esp-tls
+        esp_timer
         json
+        mbedtls
         nvs_flash
         sdmmc
         fatfs
+        spiffs
+        vfs
 )
