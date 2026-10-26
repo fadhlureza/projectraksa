@@ -16,7 +16,7 @@ extern "C" {
  * @param scl_pin GPIO pin SCL (default: PIN_I2C_SCL / GPIO 9)
  * @return esp_err_t ESP_OK jika berhasil mendeteksi DS3231 di alamat 0x68
  */
-esp_err_t rtc_init(gpio_num_t sda_pin, gpio_num_t scl_pin);
+esp_err_t ds3231_rtc_init(gpio_num_t sda_pin, gpio_num_t scl_pin);
 
 /**
  * @brief Membaca waktu aktual dari RTC DS3231 ke struct tm

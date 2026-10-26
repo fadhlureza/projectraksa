@@ -24,7 +24,7 @@ static inline uint8_t dec_to_bcd(uint8_t val) {
     return ((val / 10) << 4) | (val % 10);
 }
 
-esp_err_t rtc_init(gpio_num_t sda_pin, gpio_num_t scl_pin) {
+esp_err_t ds3231_rtc_init(gpio_num_t sda_pin, gpio_num_t scl_pin) {
     i2c_config_t conf = {};
     conf.mode = I2C_MODE_MASTER;
     conf.sda_io_num = sda_pin;
