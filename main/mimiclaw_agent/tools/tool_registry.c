@@ -68,22 +68,7 @@ esp_err_t tool_registry_init(void)
     };
     register_tool(&rs);
 
-    /* 2. raksa_relay: Actuate load relay with confirmation & safety check */
-    mimi_tool_t rr = {
-        .name = "raksa_relay",
-        .description = "Kendalikan relai pemutus beban utama gardu/panel listrik. Memerlukan konfirmasi operator sebelum dieksekusi, dan otomatis menolak jika kondisi bahaya (asap/suhu/arus berlebih) masih aktif.",
-        .input_schema_json =
-            "{\"type\":\"object\","
-            "\"properties\":{"
-            "\"state\":{\"type\":\"integer\",\"description\":\"0 untuk mematikan relai (putus beban), 1 untuk menyalakan relai (hubungkan beban)\"},"
-            "\"confirm\":{\"type\":\"boolean\",\"description\":\"Wajib true jika operator sudah memberikan persetujuan eksplisit untuk tindakan ini\"}"
-            "},"
-            "\"required\":[\"state\",\"confirm\"]}",
-        .execute = tool_raksa_relay_execute,
-    };
-    register_tool(&rr);
-
-    /* 3. get_current_time: DS3231 RTC */
+    /* 2. get_current_time: DS3231 RTC */
     tool_get_time_init();
     mimi_tool_t gt = {
         .name = "get_current_time",
