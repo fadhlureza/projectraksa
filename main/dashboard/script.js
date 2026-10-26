@@ -82,6 +82,15 @@ function fetchSensorData() {
                 sdEl.style.color = "#fff";
             }
 
+            // 4. Power Outlet (Relay)
+            const relayToggle = document.getElementById('relay-toggle');
+            const relayVal = document.getElementById('val-relay');
+            if (data.relay_state !== undefined) {
+                relayToggle.checked = data.relay_state;
+                relayVal.innerText = data.relay_state ? "ON" : "OFF";
+                relayVal.style.color = data.relay_state ? "#4ade80" : "#808080";
+            }
+
             // -- Update AI Hero Section (Optional, routinely updated by AI) --
             if (data.ai_status) document.getElementById('ai-status-title').innerText = data.ai_status;
             if (data.ai_insight) document.getElementById('ai-insight-text').innerText = `"${data.ai_insight}"`;
@@ -570,3 +579,27 @@ window.addEventListener('click', (e) => {
         }
     }
 });
+
+// --- Power Outlet Toggle ---
+const relayToggle = document.getElementById('relay-toggle');
+if (relayToggle) {
+    relayToggle.addEventListener('change', (e) => {
+        const newState = e.target.checked;
+        fetch('/api/relay', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ state: newState })
+        })
+        .then(res => res.json())
+        .then(data => {
+            console.log('Relay state updated', data);
+            document.getElementById('val-relay').innerText = newState ? "ON" : "OFF";
+            document.getElementById('val-relay').style.color = newState ? "#4ade80" : "#808080";
+        })
+        .catch(err => {
+            console.error('Failed to update relay', err);
+            // Revert state if failed
+            e.target.checked = !newState;
+        });
+    });
+}

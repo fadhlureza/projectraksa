@@ -130,6 +130,17 @@
                 <div class="card-header">SD Card</div>
                 <div class="card-body status-only" id="val-sd">MOUNTED</div>
             </div>
+            <!-- Power Outlet -->
+            <div class="metric-card" id="card-relay">
+                <div class="card-header">Power Outlet</div>
+                <div class="card-body" style="justify-content: space-between; align-items: center; display: flex;">
+                    <span class="status-only" id="val-relay" style="font-size: 1.2rem;">OFF</span>
+                    <label class="switch" onclick="event.stopPropagation()">
+                        <input type="checkbox" id="relay-toggle">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            </div>
         </div>
 
     </main>

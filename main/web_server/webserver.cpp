@@ -51,12 +51,12 @@ static esp_err_t api_data_get_handler(httpd_req_t *req) {
              "{\"voltage\":%.1f, \"current\":%.3f, \"power\":%.1f, "
              "\"energy\":%.0f, \"frequency\":%.1f, \"power_factor\":%.2f, "
              "\"temp\":%.2f, \"door_open\":%s, \"smoke_detected\":%s, "
-             "\"smoke_voltage\":%.2f, \"batt_volt\":%.2f, \"batt_pct\":%d}",
+             "\"smoke_voltage\":%.2f, \"batt_volt\":%.2f, \"batt_pct\":%d, \"relay_state\":%s}",
              safe_data.voltage, safe_data.current, safe_data.power,
              safe_data.energy, safe_data.frequency, safe_data.power_factor,
              safe_data.temperature, safe_data.door_open ? "true" : "false",
              safe_data.smoke_voltage > 1.6f ? "true" : "false", safe_data.smoke_voltage,
-             safe_data.battery_voltage, safe_data.battery_percentage);
+             safe_data.battery_voltage, safe_data.battery_percentage, safe_data.relay_state ? "true" : "false");
 
     httpd_resp_set_type(req, "application/json");
     httpd_resp_send(req, json_resp, HTTPD_RESP_USE_STRLEN);
@@ -157,6 +157,29 @@ static esp_err_t api_wifi_status_handler(httpd_req_t *req) {
         return ESP_OK;
     }
 
+    // --- NEW FEATURE: RELAY CONTROL API ---
+    static esp_err_t api_relay_post_handler(httpd_req_t *req) {
+        char buf[128];
+        int ret, remaining = req->content_len;
+
+        if (remaining >= sizeof(buf)) return ESP_FAIL;
+        if ((ret = httpd_req_recv(req, buf, MIN(remaining, sizeof(buf)))) <= 0) return ESP_FAIL;
+        buf[ret] = '\0';
+
+        cJSON *root = cJSON_Parse(buf);
+        if (root) {
+            cJSON *state = cJSON_GetObjectItem(root, "state");
+            if (cJSON_IsBool(state)) {
+                bool is_on = cJSON_IsTrue(state);
+                SensorManager::set_relay(is_on);
+            }
+            cJSON_Delete(root);
+        }
+
+        httpd_resp_sendstr(req, "{\"status\":\"ok\"}");
+        return ESP_OK;
+    }
+
 static const httpd_uri_t uris[] = {
     {"/", HTTP_GET, index_get_handler, nullptr},
     {"/style.css", HTTP_GET, css_get_handler, nullptr},
@@ -165,7 +188,8 @@ static const httpd_uri_t uris[] = {
     {"/api/wifi/scan", HTTP_GET, api_wifi_scan_handler, nullptr},
     {"/api/wifi/connect", HTTP_POST, api_wifi_connect_handler, nullptr},
     {"/api/wifi/status", HTTP_GET, api_wifi_status_handler, nullptr},
-    {"/api/wifi/disconnect", HTTP_POST, api_wifi_disconnect_handler, nullptr}
+    {"/api/wifi/disconnect", HTTP_POST, api_wifi_disconnect_handler, nullptr},
+    {"/api/relay", HTTP_POST, api_relay_post_handler, nullptr}
 };
 
 esp_err_t start() {

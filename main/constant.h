@@ -9,9 +9,12 @@
 // mq2 smoke sensor
 #define PIN_SMOKE_SENSOR GPIO_NUM_6
 
+// relay power outlet
+#define PIN_RELAY GPIO_NUM_14
+
 // pzem-004t
-#define PIN_PZEM_RX GPIO_NUM_44
-#define PIN_PZEM_TX GPIO_NUM_43
+#define PIN_PZEM_RX GPIO_NUM_18
+#define PIN_PZEM_TX GPIO_NUM_17
 
 // i2c config
 #define PIN_I2C_SDA GPIO_NUM_8
@@ -28,6 +31,7 @@ typedef struct {
   bool door_open;
   float smoke_voltage;
   float temperature;
+  bool relay_state;
 
   // Power Quality Data
   float voltage;

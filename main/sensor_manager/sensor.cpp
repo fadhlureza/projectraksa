@@ -3,6 +3,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "driver/gpio.h"
 
 // Sensor drivers
 #include "door/mc38.h"
@@ -105,6 +106,19 @@ void init() {
     battery_init(adc1_handle, ADC_CHANNEL_3);
     ds18b20_init_sensor(PIN_TEMP_SENSOR, &ow_bus, &ds18b20_dev);
     
+    // Initialize Relay
+    gpio_config_t io_conf = {};
+    io_conf.intr_type = GPIO_INTR_DISABLE;
+    io_conf.mode = GPIO_MODE_OUTPUT_OD; // Ubah ke Open Drain untuk 5V Relay
+    io_conf.pin_bit_mask = (1ULL << PIN_RELAY);
+    io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+    gpio_config(&io_conf);
+    
+    // Default to OFF (energize relay for NC load to turn OFF)
+    current_data.relay_state = false;
+    gpio_set_level(PIN_RELAY, 0);
+
     if (pzem_init(UART_NUM_1, PIN_PZEM_TX, PIN_PZEM_RX) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to initialize PZEM UART");
     } else {
@@ -130,6 +144,18 @@ SystemData_t get_data() {
         xSemaphoreGive(data_mutex);
     }
     return copy;
+}
+
+void set_relay(bool state) {
+    if (data_mutex != nullptr && xSemaphoreTake(data_mutex, portMAX_DELAY) == pdTRUE) {
+        current_data.relay_state = state;
+        // Normally Closed connection + Low Level Trigger:
+        // To turn ON the load (Dashboard ON): We DE-ENERGIZE the relay by sending 1 (Floating -> LED OFF). Load is connected via NC.
+        // To turn OFF the load (Dashboard OFF): We ENERGIZE the relay by sending 0 (GND -> LED ON). NC circuit opens, load is disconnected.
+        gpio_set_level(PIN_RELAY, state ? 1 : 0);
+        xSemaphoreGive(data_mutex);
+        ESP_LOGI(TAG, "Relay state set to %s", state ? "ON" : "OFF");
+    }
 }
 
 } // namespace SensorManager

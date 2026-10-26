@@ -20,4 +20,10 @@ namespace SensorManager {
      */
     SystemData_t get_data();
 
+    /**
+     * @brief Set relay state
+     * @param state true to turn ON the power outlet, false to turn OFF
+     */
+    void set_relay(bool state);
+
 } // namespace SensorManager
