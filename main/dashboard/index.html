@@ -218,15 +218,29 @@
     <button class="fab-chat" id="btn-fab-chat" title="Contact AI">💬</button>
     <div class="chat-modal" id="chatbox-modal" style="display: none;">
         <div class="chat-header">
-            <h3 style="font-size: 1.1rem;">✦ Mimiclaw Agent</h3>
-            <button class="close-btn" id="btn-close-chat" style="position: static;">✕</button>
+            <div class="chat-header-info">
+                <h3 style="font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                    ✦ Mimiclaw AI
+                    <span id="chat-ws-status" class="chat-status-pill">Offline</span>
+                </h3>
+            </div>
+            <button class="close-btn" id="btn-close-chat" style="position: static; font-size: 1.2rem;">✕</button>
         </div>
         <div class="chat-body" id="chat-messages">
-            <div class="msg ai-msg">RAKSA system is stable. How can I assist you?</div>
+            <div class="msg ai-msg">
+                <strong>RAKSA AI Agent siap.</strong><br>
+                Silakan tanyakan kondisi panel listrik, diagnostik sensor, atau kendali relay.
+            </div>
+        </div>
+        <div class="chat-quick-chips" id="chat-quick-chips">
+            <button class="chip-btn" data-prompt="Bagaimana status seluruh sensor RAKSA saat ini?">⚡ Status Panel</button>
+            <button class="chip-btn" data-prompt="Cek suhu kotak panel dan sensor asap sekarang.">🌡️ Suhu & Asap</button>
+            <button class="chip-btn" data-prompt="Apakah ada anomali atau kondisi darurat?">🛡️ Cek Anomali</button>
+            <button class="chip-btn" data-prompt="Berapa waktu dan tanggal RTC perangkat?">🕒 Waktu RTC</button>
         </div>
         <div class="chat-footer">
-            <input type="text" id="chat-input" class="input-dark" placeholder="Ask AI..." style="border:none; margin:0;">
-            <button id="btn-send-chat" class="btn btn-play" style="padding: 10px 15px;">Send</button>
+            <input type="text" id="chat-input" class="input-dark" placeholder="Ketik pesan untuk AI..." style="border:none; margin:0;" autocomplete="off">
+            <button id="btn-send-chat" class="btn btn-play" style="padding: 10px 16px;">Kirim</button>
         </div>
     </div>
 

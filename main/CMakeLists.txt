@@ -11,6 +11,7 @@ idf_component_register(
         "smoke/mq2.cpp"
         "temperature/temperature.cpp"
         "web_server/webserver.cpp"
+        "web_server/web_chat.cpp"
         "raksa_bridge/raksa_bridge.cpp"
     INCLUDE_DIRS
         "."

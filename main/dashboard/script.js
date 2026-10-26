@@ -151,7 +151,8 @@ const agentModal = document.getElementById('agent-modal');
 const btnCloseModal = document.getElementById('btn-close-modal');
 
 btnLogs.addEventListener('click', () => {
-    chatModal.style.display = 'none';
+    const cm = document.getElementById('chatbox-modal');
+    if (cm) cm.style.display = 'none';
     agentModal.style.display = 'flex';
 });
 
@@ -330,72 +331,9 @@ btnConnectWifi.addEventListener('click', () => {
 });
 
 // ==========================================
-// 5. INTERACTIVE FEATURES & MIMICLAW AI
+// 5. METRIC GRAPH & ANALYSIS MODAL
 // ==========================================
-
-// --- UI Toggle: Chatbox ---
-const fabChat = document.getElementById('btn-fab-chat');
-const chatModal = document.getElementById('chatbox-modal');
-const btnCloseChat = document.getElementById('btn-close-chat');
 const metricModal = document.getElementById('metric-modal');
-
-fabChat.addEventListener('click', (e) => {
-    e.stopPropagation(); // Prevent global click listener from immediately closing it
-    if (chatModal.style.display === 'none' || chatModal.style.display === '') {
-        chatModal.style.display = 'flex';
-        // Force close metric graph to prevent overlap
-        metricModal.style.display = 'none';
-        agentModal.style.display = 'none';
-        activeMetricKey = null;
-    } else {
-        chatModal.style.display = 'none';
-    }
-});
-btnCloseChat.addEventListener('click', () => chatModal.style.display = 'none');
-
-// --- Chat Logic ---
-const btnSendChat = document.getElementById('btn-send-chat');
-const chatInput = document.getElementById('chat-input');
-const chatMessages = document.getElementById('chat-messages');
-
-btnSendChat.addEventListener('click', sendChat);
-chatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendChat(); });
-
-function sendChat() {
-    const text = chatInput.value.trim();
-    if (!text) return;
-    
-    // Display user chat
-    chatMessages.innerHTML += `<div class="msg user-msg">${text}</div>`;
-    chatInput.value = '';
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-
-    // AI response simulation (Can be connected to C++ backend later)
-    setTimeout(() => {
-        const responses = [
-            "Checking server logs... All parameters normal.",
-            "Voltage slightly fluctuating, but still within safe limits.",
-            "This feature is not fully connected to my main brain yet, but I am ready to help monitor."
-        ];
-        const reply = responses[Math.floor(Math.random() * responses.length)];
-        chatMessages.innerHTML += `<div class="msg ai-msg">${reply}</div>`;
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }, 1000);
-}
-
-// --- Force Analyze Button (Error Handling) ---
-document.querySelector('.btn-play').addEventListener('click', (e) => {
-    // Your Force Analyze button (make sure it has .btn-play class)
-    if(e.target.innerText.includes('Force Analyze')) {
-        const originalText = e.target.innerHTML;
-        e.target.innerHTML = '▶ Sending request...';
-        
-        setTimeout(() => {
-            alert("❌ SYSTEM ERROR: Failed to contact main Mimiclaw AI server. Ensure internet connection is active and API Key is valid.");
-            e.target.innerHTML = originalText;
-        }, 1500);
-    }
-});
 
 // --- Metric Graph & Analysis Modal ---
 const btnCloseMetric = document.getElementById('btn-close-metric');
@@ -413,7 +351,8 @@ btnCloseMetric.addEventListener('click', () => {
 
 // Function called when metric card is clicked
 window.openMetric = function(title, key) {
-    chatModal.style.display = 'none'; // Force close chat to prevent overlap
+    const cm = document.getElementById('chatbox-modal');
+    if (cm) cm.style.display = 'none'; // Force close chat to prevent overlap
     
     document.getElementById('metric-modal-title').innerText = title;
     document.getElementById('metric-ai-analysis').innerText = `Analyzing ${title.toLowerCase()} data pattern... Appears stable over the last 24 hours. No anomalies detected.`;
@@ -573,9 +512,11 @@ window.addEventListener('click', (e) => {
     }
 
     // 4. Close Chatbox (if clicked outside of it and not on the fab button)
-    if (chatModal.style.display === 'flex') {
-        if (!chatModal.contains(e.target) && !fabChat.contains(e.target)) {
-            chatModal.style.display = 'none';
+    const cm = document.getElementById('chatbox-modal');
+    const fab = document.getElementById('btn-fab-chat');
+    if (cm && cm.style.display === 'flex') {
+        if (!cm.contains(e.target) && fab && !fab.contains(e.target)) {
+            cm.style.display = 'none';
         }
     }
 });
@@ -603,3 +544,246 @@ if (relayToggle) {
         });
     });
 }
+
+// ==========================================
+// 7. MIMICLAW AI WEBSOCKET CHAT
+// ==========================================
+const chatModal = document.getElementById('chatbox-modal');
+const fabChat = document.getElementById('btn-fab-chat');
+const btnCloseChat = document.getElementById('btn-close-chat');
+const chatMessages = document.getElementById('chat-messages');
+const chatInput = document.getElementById('chat-input');
+const btnSendChat = document.getElementById('btn-send-chat');
+const chatWsStatus = document.getElementById('chat-ws-status');
+const chatQuickChips = document.getElementById('chat-quick-chips');
+
+let chatWs = null;
+let wsReconnectTimer = null;
+
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function formatMarkdown(text) {
+    if (!text) return "";
+    let safe = escapeHtml(text);
+    // Bold: **text**
+    safe = safe.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Italic: *text*
+    safe = safe.replace(/(^|[^*])\*([^*]+)\*/g, '$1<em>$2</em>');
+    // Inline code: `text`
+    safe = safe.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // Bullet list items
+    safe = safe.replace(/(?:^|\n)[ \t]*[-*][ \t]+(.*)/g, '<br>• $1');
+    // Line breaks
+    safe = safe.replace(/\n/g, '<br>');
+    return safe;
+}
+
+function showTypingIndicator() {
+    if (document.getElementById('typing-indicator')) return;
+    const typing = document.createElement('div');
+    typing.id = 'typing-indicator';
+    typing.className = 'typing-indicator';
+    typing.innerHTML = '<span class="dot"></span><span class="dot"></span><span class="dot"></span>';
+    chatMessages.appendChild(typing);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typing = document.getElementById('typing-indicator');
+    if (typing) {
+        typing.remove();
+    }
+}
+
+function appendChatMessage(role, content) {
+    hideTypingIndicator();
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `msg ${role === 'user' ? 'user-msg' : 'ai-msg'}`;
+    if (role === 'user') {
+        msgDiv.textContent = content;
+    } else {
+        msgDiv.innerHTML = formatMarkdown(content);
+    }
+    chatMessages.appendChild(msgDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function updateWsStatus(online) {
+    if (!chatWsStatus) return;
+    if (online) {
+        chatWsStatus.innerText = 'Online';
+        chatWsStatus.classList.remove('offline');
+        chatWsStatus.classList.add('online');
+    } else {
+        chatWsStatus.innerText = 'Offline';
+        chatWsStatus.classList.remove('online');
+        chatWsStatus.classList.add('offline');
+    }
+}
+
+function connectChatWebSocket() {
+    if (chatWs && (chatWs.readyState === WebSocket.OPEN || chatWs.readyState === WebSocket.CONNECTING)) {
+        return;
+    }
+
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${location.host}/ws/chat`;
+
+    try {
+        chatWs = new WebSocket(wsUrl);
+
+        chatWs.onopen = () => {
+            console.log('[MimiClaw WS] Connected to', wsUrl);
+            updateWsStatus(true);
+            if (wsReconnectTimer) {
+                clearTimeout(wsReconnectTimer);
+                wsReconnectTimer = null;
+            }
+        };
+
+        chatWs.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'status' && data.status === 'thinking') {
+                    showTypingIndicator();
+                } else if (data.type === 'chat' && data.role === 'ai') {
+                    appendChatMessage('ai', data.content);
+                } else if (data.type === 'pong') {
+                    // Heartbeat response from ESP32
+                } else if (data.content) {
+                    appendChatMessage('ai', data.content);
+                }
+            } catch (err) {
+                appendChatMessage('ai', event.data);
+            }
+        };
+
+        chatWs.onclose = () => {
+            console.warn('[MimiClaw WS] Connection closed. Retrying in 3s...');
+            updateWsStatus(false);
+            hideTypingIndicator();
+            scheduleWsReconnect();
+        };
+
+        chatWs.onerror = (err) => {
+            console.error('[MimiClaw WS] Connection error:', err);
+            updateWsStatus(false);
+            hideTypingIndicator();
+            try { chatWs.close(); } catch(e) {}
+        };
+    } catch (e) {
+        console.error('[MimiClaw WS] Init failed:', e);
+        updateWsStatus(false);
+        scheduleWsReconnect();
+    }
+}
+
+function scheduleWsReconnect() {
+    if (!wsReconnectTimer) {
+        wsReconnectTimer = setTimeout(() => {
+            wsReconnectTimer = null;
+            connectChatWebSocket();
+        }, 3000);
+    }
+}
+
+// 30-second keep-alive ping to prevent NAT/router socket timeouts
+setInterval(() => {
+    if (chatWs && chatWs.readyState === WebSocket.OPEN) {
+        chatWs.send(JSON.stringify({ type: 'ping' }));
+    }
+}, 30000);
+
+function sendUserMessage(customText) {
+    const text = (customText !== undefined ? customText : (chatInput ? chatInput.value : '')).trim();
+    if (!text) return;
+
+    appendChatMessage('user', text);
+    if (chatInput) chatInput.value = '';
+    showTypingIndicator();
+
+    if (!chatWs || chatWs.readyState !== WebSocket.OPEN) {
+        setTimeout(() => {
+            appendChatMessage('ai', '⚠️ *Koneksi ke ESP32 terputus.* Sedang mencoba menghubungkan kembali...');
+            connectChatWebSocket();
+        }, 500);
+        return;
+    }
+
+    const payload = JSON.stringify({
+        type: 'chat',
+        message: text
+    });
+    chatWs.send(payload);
+}
+
+// Event Listeners with proper propagation stop and modal mutual exclusion
+if (fabChat) {
+    fabChat.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isHidden = chatModal.style.display === 'none' || !chatModal.style.display;
+        chatModal.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) {
+            // Close other modals to prevent visual overlay collision
+            if (metricModal) metricModal.style.display = 'none';
+            if (agentModal) agentModal.style.display = 'none';
+            const wifi = document.getElementById('wifi-modal');
+            if (wifi) wifi.style.display = 'none';
+            activeMetricKey = null;
+
+            connectChatWebSocket();
+            setTimeout(() => {
+                if (chatInput) chatInput.focus();
+                if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+            }, 100);
+        }
+    });
+}
+
+if (chatModal) {
+    chatModal.addEventListener('click', (e) => {
+        e.stopPropagation(); // Clicking inside chat modal does not trigger outside-click close
+    });
+}
+
+if (btnCloseChat) {
+    btnCloseChat.addEventListener('click', (e) => {
+        e.stopPropagation();
+        chatModal.style.display = 'none';
+    });
+}
+
+if (btnSendChat) {
+    btnSendChat.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sendUserMessage();
+    });
+}
+
+if (chatInput) {
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendUserMessage();
+        }
+    });
+}
+
+if (chatQuickChips) {
+    chatQuickChips.addEventListener('click', (e) => {
+        const btn = e.target.closest('.chip-btn');
+        if (btn && btn.dataset.prompt) {
+            sendUserMessage(btn.dataset.prompt);
+        }
+    });
+}
+
+// Connect WebSocket on initial dashboard load
+connectChatWebSocket();

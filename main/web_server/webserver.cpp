@@ -9,6 +9,7 @@
 #include "constant.h"
 
 #include "sensor_manager/sensor.h"
+#include "web_chat.h"
 
 namespace WebServer {
 
@@ -196,16 +197,17 @@ esp_err_t start() {
     if (server != nullptr)
         return ESP_OK;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 8192;
-    config.max_uri_handlers = 10;
+    config.stack_size = 10240;
+    config.max_uri_handlers = 16;
 
     config.max_open_sockets = 7;
-        config.lru_purge_enable = true;
+    config.lru_purge_enable = true;
 
     if (httpd_start(&server, &config) == ESP_OK) {
         for (int i = 0; i < sizeof(uris) / sizeof(httpd_uri_t); i++) {
-        httpd_register_uri_handler(server, &uris[i]);
+            httpd_register_uri_handler(server, &uris[i]);
         }
+        web_chat_register_uri(server);
         return ESP_OK;
     }
     return ESP_FAIL;
