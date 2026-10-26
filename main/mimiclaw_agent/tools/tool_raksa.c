@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include "esp_log.h"
+#include "esp_system.h"
+#include "esp_timer.h"
 #include "cJSON.h"
 
 static const char *TAG = "tool_raksa";
@@ -31,26 +33,27 @@ esp_err_t tool_raksa_status_execute(const char *input_json, char *output, size_t
     }
 
     /* Electrical parameters */
-    cJSON_AddNumberToObject(root, "voltage_v", t.voltage_v);
-    cJSON_AddNumberToObject(root, "current_a", t.current_a);
-    cJSON_AddNumberToObject(root, "power_w", t.power_w);
-    cJSON_AddNumberToObject(root, "energy_kwh", t.energy_kwh);
-    cJSON_AddNumberToObject(root, "frequency_hz", t.frequency_hz);
+    cJSON_AddNumberToObject(root, "voltage_v", t.voltage);
+    cJSON_AddNumberToObject(root, "current_a", t.current);
+    cJSON_AddNumberToObject(root, "power_w", t.power);
+    cJSON_AddNumberToObject(root, "energy_kwh", t.energy / 1000.0f);
+    cJSON_AddNumberToObject(root, "frequency_hz", t.frequency);
     cJSON_AddNumberToObject(root, "power_factor", t.power_factor);
 
     /* Environmental & physical parameters */
-    cJSON_AddNumberToObject(root, "temperature_c", t.temp_c);
-    cJSON_AddNumberToObject(root, "humidity_pct", t.humidity_pct);
-    cJSON_AddNumberToObject(root, "smoke_voltage_v", t.smoke_raw);
-    cJSON_AddBoolToObject(root, "smoke_alert", t.smoke_raw > SAFETY_SMOKE_VOLTS);
+    cJSON_AddNumberToObject(root, "temperature_c", t.temperature);
+    cJSON_AddNumberToObject(root, "smoke_voltage_v", t.smoke_voltage);
+    cJSON_AddBoolToObject(root, "smoke_alert", t.smoke_detected);
     cJSON_AddBoolToObject(root, "door_open", t.door_open);
 
+    /* Backup Battery */
+    cJSON_AddNumberToObject(root, "battery_voltage_v", t.battery_voltage);
+    cJSON_AddNumberToObject(root, "battery_pct", t.battery_pct);
+
     /* Actuator & System Status */
-    cJSON_AddNumberToObject(root, "relay_state", t.relay_state);
-    cJSON_AddNumberToObject(root, "trip_count", t.trip_count);
-    cJSON_AddStringToObject(root, "last_trip_reason", t.last_trip_reason[0] ? t.last_trip_reason : "None");
-    cJSON_AddNumberToObject(root, "free_heap_bytes", (double)t.free_heap);
-    cJSON_AddNumberToObject(root, "uptime_sec", (double)t.uptime_sec);
+    cJSON_AddNumberToObject(root, "relay_state", t.relay_state ? 1 : 0);
+    cJSON_AddNumberToObject(root, "free_heap_bytes", (double)esp_get_free_heap_size());
+    cJSON_AddNumberToObject(root, "uptime_sec", (double)(esp_timer_get_time() / 1000000ULL));
 
     char *json_str = cJSON_PrintUnformatted(root);
     cJSON_Delete(root);
@@ -65,7 +68,7 @@ esp_err_t tool_raksa_status_execute(const char *input_json, char *output, size_t
     free(json_str);
 
     ESP_LOGI(TAG, "raksa_status: V=%.1fV I=%.2fA P=%.1fW T=%.1fC Smoke=%.2fV Relay=%d",
-             t.voltage_v, t.current_a, t.power_w, t.temp_c, t.smoke_raw, t.relay_state);
+             t.voltage, t.current, t.power, t.temperature, t.smoke_voltage, t.relay_state);
     return ESP_OK;
 }
 
@@ -116,27 +119,27 @@ esp_err_t tool_raksa_relay_execute(const char *input_json, char *output, size_t 
         raksa_telemetry_t t;
         esp_err_t err = raksa_get_telemetry(&t);
         if (err == ESP_OK) {
-            if (t.smoke_raw > SAFETY_SMOKE_VOLTS) {
+            if (t.smoke_voltage > SAFETY_SMOKE_VOLTS) {
                 snprintf(output, output_size,
                          "DITOLAK: Sensor asap MQ-2 mendeteksi gas/asap berbahaya (%.2fV > %.2fV). "
                          "Relai DILARANG dinyalakan demi keselamatan kebakaran!",
-                         t.smoke_raw, SAFETY_SMOKE_VOLTS);
+                         t.smoke_voltage, SAFETY_SMOKE_VOLTS);
                 ESP_LOGE(TAG, "raksa_relay: Interlock prevented relay ON due to smoke");
                 return ESP_ERR_INVALID_STATE;
             }
-            if (t.temp_c > SAFETY_MAX_TEMP_C) {
+            if (t.temperature > SAFETY_MAX_TEMP_C) {
                 snprintf(output, output_size,
                          "DITOLAK: Suhu gardu terlampau tinggi (%.1f°C > %.1f°C). "
                          "Relai DILARANG dinyalakan sampai suhu normal kembali!",
-                         t.temp_c, SAFETY_MAX_TEMP_C);
+                         t.temperature, SAFETY_MAX_TEMP_C);
                 ESP_LOGE(TAG, "raksa_relay: Interlock prevented relay ON due to temperature");
                 return ESP_ERR_INVALID_STATE;
             }
-            if (t.current_a > SAFETY_MAX_CURRENT_A) {
+            if (t.current > SAFETY_MAX_CURRENT_A) {
                 snprintf(output, output_size,
                          "DITOLAK: Arus listrik terukur melampaui batas aman (%.2fA > %.1fA). "
                          "Relai DILARANG dinyalakan untuk mencegah lonjakan overcurrent!",
-                         t.current_a, SAFETY_MAX_CURRENT_A);
+                         t.current, SAFETY_MAX_CURRENT_A);
                 ESP_LOGE(TAG, "raksa_relay: Interlock prevented relay ON due to current");
                 return ESP_ERR_INVALID_STATE;
             }
