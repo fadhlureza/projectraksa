@@ -10,6 +10,7 @@
 
 #include "sensor_manager/sensor.h"
 #include "web_chat.h"
+#include "mimiclaw_agent/bus/message_bus.h"
 
 namespace WebServer {
 
@@ -181,6 +182,29 @@ static esp_err_t api_wifi_status_handler(httpd_req_t *req) {
         return ESP_OK;
     }
 
+static esp_err_t api_analyze_handler(httpd_req_t *req) {
+    httpd_resp_set_type(req, "application/json");
+
+    // Dispatch telemetry audit request to MimiClaw Agent Loop
+    mimi_msg_t msg;
+    memset(&msg, 0, sizeof(msg));
+    strncpy(msg.channel, MIMI_CHAN_WEB, sizeof(msg.channel) - 1);
+    strncpy(msg.chat_id, "all", sizeof(msg.chat_id) - 1);
+    msg.content = strdup("Lakukan audit komprehensif telemetri kelistrikan dan lingkungan saat ini, lalu laporkan ringkasan status serta rekomendasi.");
+
+    if (msg.content) {
+        esp_err_t push_err = message_bus_push_inbound(&msg);
+        if (push_err != ESP_OK) {
+            free(msg.content);
+            httpd_resp_sendstr(req, "{\"status\":\"busy\",\"message\":\"Antrian agen penuh\"}");
+            return ESP_OK;
+        }
+    }
+
+    httpd_resp_sendstr(req, "{\"status\":\"ok\",\"message\":\"Audit kelistrikan dimulai\"}");
+    return ESP_OK;
+}
+
 static const httpd_uri_t uris[] = {
     {"/", HTTP_GET, index_get_handler, nullptr},
     {"/style.css", HTTP_GET, css_get_handler, nullptr},
@@ -190,7 +214,8 @@ static const httpd_uri_t uris[] = {
     {"/api/wifi/connect", HTTP_POST, api_wifi_connect_handler, nullptr},
     {"/api/wifi/status", HTTP_GET, api_wifi_status_handler, nullptr},
     {"/api/wifi/disconnect", HTTP_POST, api_wifi_disconnect_handler, nullptr},
-    {"/api/relay", HTTP_POST, api_relay_post_handler, nullptr}
+    {"/api/relay", HTTP_POST, api_relay_post_handler, nullptr},
+    {"/api/analyze", HTTP_POST, api_analyze_handler, nullptr}
 };
 
 esp_err_t start() {

@@ -5,7 +5,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "esp_log.h"
+#include "esp_heap_caps.h"
 
 static const char *TAG = "context";
 
@@ -51,7 +53,7 @@ esp_err_t context_build_system_prompt(char *buf, size_t size)
         "## Memori Lokal\n"
         "Anda memiliki memori persisten di flash internal:\n"
         "- Jangka panjang: " MIMI_SPIFFS_MEMORY_DIR "/MEMORY.md\n"
-        "- Catatan harian: " MIMI_SPIFFS_MEMORY_DIR "/daily/<YYYY-MM-DD>.md\n"
+        "- Catatan harian: " MIMI_SPIFFS_MEMORY_DIR "/<YYYY-MM-DD>.md\n"
         "Catatlah anomali penting, instruksi khusus operator, atau histori perbaikan ke dalam memori.\n\n"
         "## SOP Penanganan Gangguan (Skills)\n"
         "File panduan SOP tersimpan pada direktori " MIMI_SKILLS_PREFIX ".\n"
@@ -61,26 +63,33 @@ esp_err_t context_build_system_prompt(char *buf, size_t size)
     off = append_file(buf, size, off, MIMI_SOUL_FILE, "Persona & Nilai Dasar");
     off = append_file(buf, size, off, MIMI_USER_FILE, "Profil Operator");
 
-    /* Long-term memory */
-    char mem_buf[4096];
-    if (memory_read_long_term(mem_buf, sizeof(mem_buf)) == ESP_OK && mem_buf[0]) {
-        off += snprintf(buf + off, size - off, "\n## Memori Jangka Panjang\n\n%s\n", mem_buf);
+    /* Allocate temporary scratch buffer in PSRAM to prevent FreeRTOS task stack overflow (saves >10 KB stack) */
+    char *scratch = (char *)heap_caps_malloc(4096, MALLOC_CAP_SPIRAM | MALLOC_CAP_8BIT);
+    if (!scratch) {
+        scratch = (char *)malloc(4096);
     }
 
-    /* Recent daily notes (last 3 days) */
-    char recent_buf[4096];
-    if (memory_read_recent(recent_buf, sizeof(recent_buf), 3) == ESP_OK && recent_buf[0]) {
-        off += snprintf(buf + off, size - off, "\n## Catatan Harian Terakhir\n\n%s\n", recent_buf);
-    }
+    if (scratch) {
+        /* Long-term memory */
+        if (memory_read_long_term(scratch, 4096) == ESP_OK && scratch[0]) {
+            off += snprintf(buf + off, size - off, "\n## Memori Jangka Panjang\n\n%s\n", scratch);
+        }
 
-    /* Skills summary */
-    char skills_buf[2048];
-    size_t skills_len = skill_loader_build_summary(skills_buf, sizeof(skills_buf));
-    if (skills_len > 0) {
-        off += snprintf(buf + off, size - off,
-            "\n## Daftar SOP Skills Tersedia\n\n"
-            "Gunakan read_file untuk membaca prosedur lengkap skill:\n%s\n",
-            skills_buf);
+        /* Recent daily notes (last 3 days) */
+        if (memory_read_recent(scratch, 4096, 3) == ESP_OK && scratch[0]) {
+            off += snprintf(buf + off, size - off, "\n## Catatan Harian Terakhir\n\n%s\n", scratch);
+        }
+
+        /* Skills summary */
+        size_t skills_len = skill_loader_build_summary(scratch, 4096);
+        if (skills_len > 0) {
+            off += snprintf(buf + off, size - off,
+                "\n## Daftar SOP Skills Tersedia\n\n"
+                "Gunakan read_file untuk membaca prosedur lengkap skill:\n%s\n",
+                scratch);
+        }
+
+        free(scratch);
     }
 
     ESP_LOGI(TAG, "RAKSA system prompt built: %d bytes", (int)off);
